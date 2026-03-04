@@ -2,6 +2,7 @@
 import os
 from abc import ABC, abstractmethod
 import cv2
+from pathlib import Path
 
 # -----------------------------
 # Base source interface
@@ -10,6 +11,11 @@ class BaseSource(ABC):
     @abstractmethod
     def get_frame(self):
         """Returns a frame"""
+        pass
+
+    @abstractmethod
+    def cleanup(self):
+        """Cleanup"""
         pass
 
 # -----------------------------
@@ -21,6 +27,9 @@ class ImageSource(BaseSource):
         self._consumed = False # This ensures an image is only processed once
 
     def get_frame(self):
+        """
+        Returns the image.
+        """
         if self._consumed:
             return None
         
@@ -29,6 +38,10 @@ class ImageSource(BaseSource):
             raise FileNotFoundError(f"Could not read image: {self.path}")
         self._consumed = True
         return frame
+    
+    def cleanup(self):
+        """Nothing to cleanup if source is just an image"""
+        pass
 
 # -----------------------------
 # Video source
@@ -48,8 +61,7 @@ class VideoSource(BaseSource):
 
     def get_frame(self):
         """
-        Returns:
-            frame (np.ndarray) or None if video has ended
+        Returns a frame from the video.
         """
         ret, frame = self.cap.read()
 
@@ -59,16 +71,51 @@ class VideoSource(BaseSource):
             return None
 
         return frame
+    
+    def cleanup(self):
+        """Release the video."""
+        if self.cap.isOpened():
+            print("Closing video..")
+            self.cap.release()
 
 # -----------------------------
 # Stream source
 # -----------------------------
 class StreamSource(BaseSource):
-    def __init__(self, url):
+    def __init__(self, url, download_folder="output"):
         self.url = url
 
+        if "youtube.com" in url or "youtu.be" in url:
+            import yt_dlp
+            ydl_opts = {
+                "format": "best[ext=mp4]",
+                "outtmpl": str(Path(download_folder) / "video.%(ext)s"),
+                "quiet": True
+            }
+            
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(url, download=True)
+                self.downloaded_path = ydl.prepare_filename(info)
+
+            self.cap = cv2.VideoCapture(self.downloaded_path)
+        else:
+            self.cap = cv2.VideoCapture(url)
+            
+        if not self.cap.isOpened():
+            raise ValueError(f"Could not open stream: {url}")
+
     def get_frame(self):
-        raise NotImplementedError("StreamSource not implemented yet")
+        """
+        Returns a frame from the stream.
+        """
+        ret, frame = self.cap.read()
+        if not ret:
+            return None
+        return frame
+    
+    def cleanup(self):
+        if self.cap.isOpened():
+            self.cap.release()
     
 # -----------------------------
 # USB camera source
@@ -93,16 +140,16 @@ class USBCameraSource(BaseSource):
     def get_frame(self):
         """
         Returns a frame from the USB camera.
-        Returns None only if the camera fails (very rare).
         """
         ret, frame = self.cap.read()
         if not ret:
             return None
         return frame
 
-    def release(self):
+    def cleanup(self):
         """Release the camera."""
         if self.cap.isOpened():
+            print("Closing USB camera..")
             self.cap.release()
 
 # -----------------------------

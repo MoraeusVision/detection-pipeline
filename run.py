@@ -8,10 +8,12 @@ from utils import CleanupManager
 def main():
     args = parse_arguments()
     source = SourceFactory.create(args.source) # Returns the source depending on media
-    print(source)
+    visualizer = Visualizer() if args.show else None
+
     # Cleanup manager collects cleanup methods and run them in the end
     cleanup = CleanupManager()
-    visualizer = Visualizer() if args.show else None
+    if source:
+        cleanup.add(source.cleanup)
     if visualizer:
         cleanup.add(visualizer.close)
     
