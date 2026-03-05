@@ -5,6 +5,11 @@ import cv2
 from pathlib import Path
 
 # -----------------------------
+# Constants
+# -----------------------------
+MAX_SIZE_MB = 20 # Just to not starting to download hour long youtube videos
+
+# -----------------------------
 # Base source interface
 # -----------------------------
 class BaseSource(ABC):
@@ -24,19 +29,15 @@ class BaseSource(ABC):
 class ImageSource(BaseSource):
     def __init__(self, path):
         self.path = path
-        self._consumed = False # This ensures an image is only processed once
+        
 
     def get_frame(self):
         """
         Returns the image.
         """
-        if self._consumed:
-            return None
-        
         frame = cv2.imread(self.path)
         if frame is None:
             raise FileNotFoundError(f"Could not read image: {self.path}")
-        self._consumed = True
         return frame
     
     def cleanup(self):
@@ -54,6 +55,7 @@ class VideoSource(BaseSource):
         """
         self.path = path
         self.cap = cv2.VideoCapture(self.path)
+        self.fps = self.cap.get(cv2.CAP_PROP_FPS)
 
         # check that video opened correctly
         if not self.cap.isOpened():
@@ -82,11 +84,14 @@ class VideoSource(BaseSource):
 # Stream source
 # -----------------------------
 class StreamSource(BaseSource):
-    def __init__(self, url, download_folder="output"):
+    def __init__(self, url, download_folder="temp", is_youtube=False):
         self.url = url
+        self.is_youtube = is_youtube
 
+        # If stream source is from Youtube
         if "youtube.com" in url or "youtu.be" in url:
             import yt_dlp
+            self.is_youtube = True
             ydl_opts = {
                 "format": "best[ext=mp4]",
                 "outtmpl": str(Path(download_folder) / "video.%(ext)s"),
@@ -95,9 +100,18 @@ class StreamSource(BaseSource):
             
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=True)
+                filesize_bytes = info.get("filesize") or info.get("filesize_approx")
+                if filesize_bytes is None:
+                    raise ValueError("Could not determine video file size.")
+                
+                filesize_mb = filesize_bytes / (1024 * 1024)
+                if filesize_mb > MAX_SIZE_MB:
+                    raise ValueError(f"The video exceeds the maximus size of {MAX_SIZE_MB}MB. Video is {int(filesize_mb)}MB.")
+                
                 self.downloaded_path = ydl.prepare_filename(info)
 
             self.cap = cv2.VideoCapture(self.downloaded_path)
+            self.fps = self.cap.get(cv2.CAP_PROP_FPS) # Used for setting the visualization FPS
         else:
             self.cap = cv2.VideoCapture(url)
             
@@ -114,8 +128,13 @@ class StreamSource(BaseSource):
         return frame
     
     def cleanup(self):
+        """Release the stream."""
         if self.cap.isOpened():
             self.cap.release()
+
+        # Remove the downloaded youtube video
+        if hasattr(self, "downloaded_path") and os.path.exists(self.downloaded_path):
+            os.remove(self.downloaded_path)
     
 # -----------------------------
 # USB camera source

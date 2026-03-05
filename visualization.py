@@ -11,13 +11,14 @@ class Visualizer:
         self.window_name = window_name
         self.width = width
         self.height = height
+        
 
         # Create a resizable window
         cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
         # Set the window size
         cv2.resizeWindow(self.window_name, self.width, self.height)
 
-    def show(self, frame, boxes=None, is_image=False):
+    def show(self, frame, boxes=None, is_image=False, delay: int = 1):
         """
         Display a single frame with optional bounding boxes.
 
@@ -38,11 +39,9 @@ class Visualizer:
         cv2.imshow(self.window_name, display_frame)
         
         if is_image:
-            # wait indefinitely until key is pressed
-            key = cv2.waitKey(0) & 0xFF
+            key = cv2.waitKey(0) & 0xFF # wait until key is pressed
         else:
-            # video/stream: short delay
-            key = cv2.waitKey(1) & 0xFF
+            key = cv2.waitKey(delay) & 0xFF
 
         # Exit if q is pressed
         if key == ord('q'):

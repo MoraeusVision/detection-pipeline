@@ -1,5 +1,5 @@
 
-from source_factory import SourceFactory, ImageSource
+from source_factory import SourceFactory, ImageSource, VideoSource, StreamSource
 from arguments import parse_arguments
 from visualization import Visualizer
 from utils import CleanupManager
@@ -15,17 +15,24 @@ def main():
     if source:
         cleanup.add(source.cleanup)
     if visualizer:
-        cleanup.add(visualizer.close)
+        cleanup.add(visualizer.close)    
     
     while True:
         frame = source.get_frame()
         if frame is None:
             break
 
+        """
+        Inference pipeline comes here
+        """
+
         # Show frame
         if visualizer is not None:
-            is_image = isinstance(source, ImageSource)
-            if not visualizer.show(frame=frame, is_image=is_image):
+            is_image = isinstance(source, ImageSource) # Keep the frame if just an image
+            delay = 1
+            if isinstance(source, VideoSource) or (isinstance(source, StreamSource) and source.is_youtube):
+                delay = int(1000 / source.fps)
+            if not visualizer.show(frame=frame, is_image=is_image, delay=delay):
                 break
 
     # Clean up
