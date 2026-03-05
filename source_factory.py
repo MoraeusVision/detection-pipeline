@@ -1,5 +1,9 @@
 
 import os
+import shutil
+import tempfile
+import math
+import logging
 from abc import ABC, abstractmethod
 import cv2
 from pathlib import Path
@@ -56,6 +60,12 @@ class VideoSource(BaseSource):
         self.path = path
         self.cap = cv2.VideoCapture(self.path)
         self.fps = self.cap.get(cv2.CAP_PROP_FPS)
+        # Protect against cameras/videos that report 0 or NaN
+        try:
+            if not self.fps or self.fps <= 0 or (isinstance(self.fps, float) and math.isnan(self.fps)):
+                self.fps = 30
+        except Exception:
+            self.fps = 30
 
         # check that video opened correctly
         if not self.cap.isOpened():
@@ -77,7 +87,7 @@ class VideoSource(BaseSource):
     def cleanup(self):
         """Release the video."""
         if self.cap.isOpened():
-            print("Closing video..")
+            logging.info("Closing video..")
             self.cap.release()
 
 # -----------------------------
@@ -90,28 +100,50 @@ class StreamSource(BaseSource):
 
         # If stream source is from Youtube
         if "youtube.com" in url or "youtu.be" in url:
-            import yt_dlp
+            try:
+                import yt_dlp
+            except Exception as e:
+                raise ImportError("yt_dlp is required to use YouTube sources. Install it or use a different source.") from e
+
             self.is_youtube = True
+            # Use a secure temporary directory for downloads
+            temp_dir = Path(tempfile.mkdtemp())
             ydl_opts = {
                 "format": "best[ext=mp4]",
-                "outtmpl": str(Path(download_folder) / "video.%(ext)s"),
+                "outtmpl": str(temp_dir / "video.%(ext)s"),
                 "quiet": True
             }
-            
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(url, download=True)
-                filesize_bytes = info.get("filesize") or info.get("filesize_approx")
-                if filesize_bytes is None:
-                    raise ValueError("Could not determine video file size.")
-                
-                filesize_mb = filesize_bytes / (1024 * 1024)
-                if filesize_mb > MAX_SIZE_MB:
-                    raise ValueError(f"The video exceeds the maximus size of {MAX_SIZE_MB}MB. Video is {int(filesize_mb)}MB.")
-                
-                self.downloaded_path = ydl.prepare_filename(info)
+
+            try:
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    info = ydl.extract_info(url, download=True)
+                    filesize_bytes = info.get("filesize") or info.get("filesize_approx")
+                    if filesize_bytes is None:
+                        raise ValueError("Could not determine video file size.")
+
+                    filesize_mb = filesize_bytes / (1024 * 1024)
+                    if filesize_mb > MAX_SIZE_MB:
+                        raise ValueError(f"The video exceeds the maximum size of {MAX_SIZE_MB}MB. Video is {int(filesize_mb)}MB.")
+
+                    self.downloaded_path = ydl.prepare_filename(info)
+                # store the temp dir so we can clean it up later
+                self._temp_dir = temp_dir
+            except Exception:
+                # remove temp dir on failure
+                try:
+                    if temp_dir.exists():
+                        shutil.rmtree(temp_dir)
+                except Exception:
+                    logging.warning("Failed to remove temporary download dir")
+                raise
 
             self.cap = cv2.VideoCapture(self.downloaded_path)
-            self.fps = self.cap.get(cv2.CAP_PROP_FPS) # Used for setting the visualization FPS
+            self.fps = self.cap.get(cv2.CAP_PROP_FPS)  # Used for setting the visualization FPS
+            try:
+                if not self.fps or self.fps <= 0 or (isinstance(self.fps, float) and math.isnan(self.fps)):
+                    self.fps = 30
+            except Exception:
+                self.fps = 30
         else:
             self.cap = cv2.VideoCapture(url)
             
@@ -134,7 +166,17 @@ class StreamSource(BaseSource):
 
         # Remove the downloaded youtube video
         if hasattr(self, "downloaded_path") and os.path.exists(self.downloaded_path):
-            os.remove(self.downloaded_path)
+            try:
+                os.remove(self.downloaded_path)
+            except Exception:
+                logging.warning("Failed to remove downloaded video: %s", getattr(self, "downloaded_path", None))
+
+        # Remove temporary download directory if present
+        if hasattr(self, "_temp_dir") and Path(self._temp_dir).exists():
+            try:
+                shutil.rmtree(self._temp_dir)
+            except Exception:
+                logging.warning("Failed to remove temporary download directory: %s", getattr(self, "_temp_dir", None))
     
 # -----------------------------
 # USB camera source
@@ -155,6 +197,13 @@ class USBCameraSource(BaseSource):
 
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+        # Try to read FPS; fall back to sensible default if not available
+        self.fps = self.cap.get(cv2.CAP_PROP_FPS)
+        try:
+            if not self.fps or self.fps <= 0 or (isinstance(self.fps, float) and math.isnan(self.fps)):
+                self.fps = 30
+        except Exception:
+            self.fps = 30
 
     def get_frame(self):
         """
@@ -168,7 +217,7 @@ class USBCameraSource(BaseSource):
     def cleanup(self):
         """Release the camera."""
         if self.cap.isOpened():
-            print("Closing USB camera..")
+            logging.info("Closing USB camera..")
             self.cap.release()
 
 # -----------------------------

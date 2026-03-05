@@ -1,4 +1,6 @@
+import logging
 import cv2
+
 
 class Visualizer:
     def __init__(self, window_name: str="Detection", width: int=800, height: int=600):
@@ -51,5 +53,5 @@ class Visualizer:
         
     def close(self):
         """Close the display window."""
-        print("Closing windows..")
+        logging.info("Closing windows..")
         cv2.destroyAllWindows()

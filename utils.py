@@ -1,3 +1,6 @@
+import logging
+
+
 class CleanupManager:
     def __init__(self):
         # Store cleanup functions
@@ -19,5 +22,5 @@ class CleanupManager:
             try:
                 func(*args, **kwargs)
             except Exception as e:
-                print(f"Cleanup failed for {func}: {e}")
+                logging.exception("Cleanup failed for %s: %s", func, e)
         self._tasks.clear()
