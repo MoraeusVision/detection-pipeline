@@ -11,7 +11,7 @@ from pathlib import Path
 # -----------------------------
 # Constants
 # -----------------------------
-MAX_SIZE_MB = 20 # Just to not starting to download hour long youtube videos
+MAX_SIZE_MB = 100 # Just to not starting to download hour long youtube videos
 
 # -----------------------------
 # Base source interface
@@ -109,14 +109,15 @@ class StreamSource(BaseSource):
             # Use a secure temporary directory for downloads
             temp_dir = Path(tempfile.mkdtemp())
             ydl_opts = {
-                "format": "best[ext=mp4]",
+                "format": "bestvideo[ext=mp4]",
                 "outtmpl": str(temp_dir / "video.%(ext)s"),
                 "quiet": True
             }
 
             try:
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                    info = ydl.extract_info(url, download=True)
+                    info = ydl.extract_info(url, download=False)
+
                     filesize_bytes = info.get("filesize") or info.get("filesize_approx")
                     if filesize_bytes is None:
                         raise ValueError("Could not determine video file size.")
@@ -125,6 +126,7 @@ class StreamSource(BaseSource):
                     if filesize_mb > MAX_SIZE_MB:
                         raise ValueError(f"The video exceeds the maximum size of {MAX_SIZE_MB}MB. Video is {int(filesize_mb)}MB.")
 
+                    ydl.download([url])
                     self.downloaded_path = ydl.prepare_filename(info)
                 # store the temp dir so we can clean it up later
                 self._temp_dir = temp_dir
