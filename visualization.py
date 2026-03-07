@@ -13,7 +13,10 @@ class Visualizer:
         self.window_name = window_name
         self.width = width
         self.height = height
-        
+
+        # playback control
+        self.paused = False            # whether display is currently paused
+        self.last_frame = None         # most recent frame shown (for pause)
 
         # Create a resizable window
         cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
@@ -28,8 +31,14 @@ class Visualizer:
             frame (np.ndarray): Image to display
             boxes (list of [x1, y1, x2, y2], optional): Bounding boxes to draw
         """
-        # Make a copy so original frame is not modified
-        display_frame = frame.copy()
+        # choose which frame to display; if we are paused, replay last_frame
+        if self.paused and self.last_frame is not None and not is_image:
+            display_frame = self.last_frame.copy()
+        else:
+            # Make a copy so original frame is not modified
+            display_frame = frame.copy()
+            # remember the frame so pausing can reuse it
+            self.last_frame = display_frame
 
         # Draw bounding boxes if provided
         if boxes is not None:
@@ -40,10 +49,20 @@ class Visualizer:
         # Show the frame in the window
         cv2.imshow(self.window_name, display_frame)
         
-        if is_image:
-            key = cv2.waitKey(0) & 0xFF # wait until key is pressed
+        # Determine how long to wait for a key press. If paused or showing
+        # a static image we block indefinitely; otherwise we proceed with
+        # a short delay.
+        if is_image or self.paused:
+            key = cv2.waitKey(0) & 0xFF  # wait until key is pressed
         else:
             key = cv2.waitKey(1) & 0xFF
+
+        # Toggle pause with spacebar
+        if key == ord(' '):
+            self.paused = not self.paused
+            logging.info("Playback %s", "paused" if self.paused else "resumed")
+            # after toggling pause we want to keep showing the same frame
+            return True
 
         # Exit if q is pressed
         if key == ord('q'):

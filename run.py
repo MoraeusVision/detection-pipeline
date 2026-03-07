@@ -23,16 +23,20 @@ def main():
         cleanup.add(visualizer.close)
 
     try:
+        frame = None
+        is_image = isinstance(source, ImageSource) if source else False
+
         while True:
-            frame = source.get_frame()
-            if frame is None:
-                break
+            # only fetch a new frame if we aren't paused or if we have no frame yet
+            if frame is None or (visualizer and not visualizer.paused):
+                frame = source.get_frame()
+                if frame is None:
+                    break
 
             # Inference pipeline comes here
 
             # Show frame
             if visualizer is not None:
-                is_image = isinstance(source, ImageSource)  # Keep the frame if just an image
                 if not visualizer.show(frame=frame, is_image=is_image):
                     break
     except Exception:
