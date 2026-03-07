@@ -1,11 +1,12 @@
 
 import logging
-import math
 
 from source_factory import SourceFactory, ImageSource, VideoSource, StreamSource
+from events import EventManager, FrameContext
 from arguments import parse_arguments
 from visualization import Visualizer
 from utils import CleanupManager
+import time
 
 
 def main():
@@ -14,6 +15,9 @@ def main():
     args = parse_arguments()
     source = SourceFactory.create(args.source)  # Returns the source depending on media
     visualizer = Visualizer() if args.show else None
+
+    event_manager = EventManager()
+    event_manager.register("on_frame", visualizer)
 
     # Cleanup manager collects cleanup methods and run them in the end
     cleanup = CleanupManager()
@@ -30,10 +34,13 @@ def main():
             # only fetch a new frame if we aren't paused or if we have no frame yet
             if frame is None or (visualizer and not visualizer.paused):
                 frame = source.get_frame()
+                ctx = FrameContext(frame, time.time())
+
+                event_manager.notify("on_frame", ctx)
+
                 if frame is None:
                     break
 
-            # Inference pipeline comes here
 
             # Show frame
             if visualizer is not None:

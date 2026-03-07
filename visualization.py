@@ -1,8 +1,13 @@
 import logging
 import cv2
+from abc import ABC, abstractmethod
 
+class BaseVisualizer(ABC):
+    @abstractmethod
+    def handle_event():
+        pass
 
-class Visualizer:
+class Visualizer(BaseVisualizer):
     def __init__(self, window_name: str="Detection", width: int=800, height: int=600):
         """
         Args:
@@ -22,6 +27,10 @@ class Visualizer:
         cv2.namedWindow(self.window_name, cv2.WINDOW_NORMAL)
         # Set the window size
         cv2.resizeWindow(self.window_name, self.width, self.height)
+
+    def handle_event(self, event, data):
+        if event == "on_frame":
+            self.show(data.frame)
 
     def show(self, frame, boxes=None, is_image=False):
         """
