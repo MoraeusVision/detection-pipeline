@@ -20,7 +20,7 @@ class Visualizer:
         # Set the window size
         cv2.resizeWindow(self.window_name, self.width, self.height)
 
-    def show(self, frame, boxes=None, is_image=False, delay: int = 1):
+    def show(self, frame, boxes=None, is_image=False):
         """
         Display a single frame with optional bounding boxes.
 
@@ -43,7 +43,7 @@ class Visualizer:
         if is_image:
             key = cv2.waitKey(0) & 0xFF # wait until key is pressed
         else:
-            key = cv2.waitKey(delay) & 0xFF
+            key = cv2.waitKey(1) & 0xFF
 
         # Exit if q is pressed
         if key == ord('q'):

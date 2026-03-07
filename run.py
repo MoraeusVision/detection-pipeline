@@ -33,16 +33,7 @@ def main():
             # Show frame
             if visualizer is not None:
                 is_image = isinstance(source, ImageSource)  # Keep the frame if just an image
-                delay = 1
-                if isinstance(source, VideoSource) or (isinstance(source, StreamSource) and getattr(source, "is_youtube", False)):
-                    fps = getattr(source, "fps", None) or 30
-                    try:
-                        if fps <= 0 or (isinstance(fps, float) and math.isnan(fps)):
-                            fps = 30
-                    except Exception:
-                        fps = 30
-                    delay = max(1, int(1000 / fps))
-                if not visualizer.show(frame=frame, is_image=is_image, delay=delay):
+                if not visualizer.show(frame=frame, is_image=is_image):
                     break
     except Exception:
         logging.exception("Unhandled error in main loop")

@@ -11,7 +11,7 @@ from pathlib import Path
 # -----------------------------
 # Constants
 # -----------------------------
-MAX_SIZE_MB = 100 # Just to not starting to download hour long youtube videos
+MAX_SIZE_MB = 300 # Just to not starting to download hour long youtube videos
 
 # -----------------------------
 # Base source interface
