@@ -1,0 +1,190 @@
+import pytest
+from unittest.mock import patch, MagicMock
+import numpy as np
+import cv2
+from visualization import Visualizer
+
+
+class TestVisualizer:
+    @patch('cv2.namedWindow')
+    @patch('cv2.resizeWindow')
+    def test_init(self, mock_resize, mock_named):
+        """Test Visualizer initialization."""
+        visualizer = Visualizer(window_name="Test", width=640, height=480)
+        
+        assert visualizer.window_name == "Test"
+        assert visualizer.width == 640
+        assert visualizer.height == 480
+        assert visualizer.paused == False
+        assert visualizer.last_frame is None
+        
+        mock_named.assert_called_once_with("Test", cv2.WINDOW_NORMAL)
+        mock_resize.assert_called_once_with("Test", 640, 480)
+
+    @patch('cv2.namedWindow')
+    @patch('cv2.resizeWindow')
+    def test_init_defaults(self, mock_resize, mock_named):
+        """Test Visualizer with default parameters."""
+        visualizer = Visualizer()
+        
+        assert visualizer.window_name == "Detection"
+        assert visualizer.width == 800
+        assert visualizer.height == 600
+
+    @patch('cv2.namedWindow')
+    @patch('cv2.resizeWindow')
+    @patch('visualization.Visualizer.show')
+    def test_handle_event_on_frame(self, mock_show, mock_resize, mock_named):
+        """Test handle_event calls show for on_frame event."""
+        visualizer = Visualizer()
+        mock_data = MagicMock()
+        mock_data.frame = np.zeros((100, 100, 3), dtype=np.uint8)
+        
+        visualizer.handle_event("on_frame", mock_data)
+        
+        mock_show.assert_called_once_with(mock_data.frame)
+
+    @patch('cv2.namedWindow')
+    @patch('cv2.resizeWindow')
+    def test_handle_event_other_event(self, mock_resize, mock_named):
+        """Test handle_event does nothing for other events."""
+        visualizer = Visualizer()
+        
+        # Should not raise error
+        visualizer.handle_event("other_event", None)
+
+    @patch('cv2.namedWindow')
+    @patch('cv2.resizeWindow')
+    @patch('cv2.imshow')
+    @patch('cv2.waitKey')
+    @patch('logging.info')
+    def test_show_normal_frame(self, mock_logging, mock_waitkey, mock_imshow, mock_resize, mock_named):
+        """Test show with normal frame (not paused, not image)."""
+        visualizer = Visualizer()
+        frame = np.ones((100, 100, 3), dtype=np.uint8)
+        
+        mock_waitkey.return_value = 0  # No key pressed
+        
+        result = visualizer.show(frame)
+        
+        assert result == True
+        assert np.array_equal(visualizer.last_frame, frame)
+        mock_imshow.assert_called_once()
+        mock_waitkey.assert_called_once_with(1)
+        mock_logging.assert_not_called()
+
+    @patch('cv2.namedWindow')
+    @patch('cv2.resizeWindow')
+    @patch('cv2.imshow')
+    @patch('cv2.waitKey')
+    @patch('logging.info')
+    def test_show_paused_frame(self, mock_logging, mock_waitkey, mock_imshow, mock_resize, mock_named):
+        """Test show when paused, reuses last_frame."""
+        visualizer = Visualizer()
+        visualizer.paused = True
+        visualizer.last_frame = np.ones((100, 100, 3), dtype=np.uint8)
+        new_frame = np.zeros((100, 100, 3), dtype=np.uint8)
+        
+        mock_waitkey.return_value = 0
+        
+        result = visualizer.show(new_frame)
+        
+        assert result == True
+        # Should show last_frame, not new_frame
+        displayed_frame = mock_imshow.call_args[0][1]
+        assert np.array_equal(displayed_frame, visualizer.last_frame)
+        mock_waitkey.assert_called_once_with(0)  # Wait indefinitely when paused
+
+    @patch('cv2.namedWindow')
+    @patch('cv2.resizeWindow')
+    @patch('cv2.imshow')
+    @patch('cv2.waitKey')
+    @patch('logging.info')
+    def test_show_image_mode(self, mock_logging, mock_waitkey, mock_imshow, mock_resize, mock_named):
+        """Test show in image mode (blocks indefinitely)."""
+        visualizer = Visualizer()
+        frame = np.ones((100, 100, 3), dtype=np.uint8)
+        
+        mock_waitkey.return_value = 0
+        
+        result = visualizer.show(frame, is_image=True)
+        
+        assert result == True
+        mock_waitkey.assert_called_once_with(0)  # Wait indefinitely for images
+
+    @patch('cv2.namedWindow')
+    @patch('cv2.resizeWindow')
+    @patch('cv2.imshow')
+    @patch('cv2.waitKey')
+    @patch('cv2.rectangle')
+    def test_show_with_boxes(self, mock_rectangle, mock_waitkey, mock_imshow, mock_resize, mock_named):
+        """Test show draws bounding boxes."""
+        visualizer = Visualizer()
+        frame = np.ones((100, 100, 3), dtype=np.uint8)
+        boxes = [[10, 10, 50, 50], [20, 20, 60, 60]]
+        
+        mock_waitkey.return_value = 0
+        
+        visualizer.show(frame, boxes=boxes)
+        
+        calls = mock_rectangle.call_args_list
+        assert len(calls) == 2
+        
+        # Check first box
+        assert calls[0][0][1] == (10, 10)
+        assert calls[0][0][2] == (50, 50)
+        assert calls[0][0][3] == (0, 255, 0)
+        assert calls[0][0][4] == 2
+        
+        # Check second box
+        assert calls[1][0][1] == (20, 20)
+        assert calls[1][0][2] == (60, 60)
+        assert calls[1][0][3] == (0, 255, 0)
+        assert calls[1][0][4] == 2
+
+    @patch('cv2.namedWindow')
+    @patch('cv2.resizeWindow')
+    @patch('cv2.imshow')
+    @patch('cv2.waitKey')
+    @patch('logging.info')
+    def test_show_toggle_pause(self, mock_logging, mock_waitkey, mock_imshow, mock_resize, mock_named):
+        """Test spacebar toggles pause."""
+        visualizer = Visualizer()
+        frame = np.ones((100, 100, 3), dtype=np.uint8)
+        
+        mock_waitkey.return_value = ord(' ')  # Space pressed
+        
+        result = visualizer.show(frame)
+        
+        assert result == True  # Continue showing
+        assert visualizer.paused == True
+        mock_logging.assert_called_once_with("Playback %s", "paused")
+
+    @patch('cv2.namedWindow')
+    @patch('cv2.resizeWindow')
+    @patch('cv2.imshow')
+    @patch('cv2.waitKey')
+    @patch('logging.info')
+    def test_show_exit_on_q(self, mock_logging, mock_waitkey, mock_imshow, mock_resize, mock_named):
+        """Test q key exits."""
+        visualizer = Visualizer()
+        frame = np.ones((100, 100, 3), dtype=np.uint8)
+        
+        mock_waitkey.return_value = ord('q')
+        
+        result = visualizer.show(frame)
+        
+        assert result == False  # Exit
+
+    @patch('cv2.namedWindow')
+    @patch('cv2.resizeWindow')
+    @patch('cv2.destroyAllWindows')
+    @patch('logging.info')
+    def test_cleanup(self, mock_logging, mock_destroy, mock_resize, mock_named):
+        """Test cleanup destroys windows."""
+        visualizer = Visualizer()
+        
+        visualizer.cleanup()
+        
+        mock_destroy.assert_called_once()
+        mock_logging.assert_called_once_with("Closing windows..")
