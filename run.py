@@ -24,7 +24,7 @@ def main():
     if source:
         cleanup.add(source.cleanup)
     if visualizer:
-        cleanup.add(visualizer.close)
+        cleanup.add(visualizer.cleanup)
 
     try:
         frame = None

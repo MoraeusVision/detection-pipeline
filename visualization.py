@@ -79,7 +79,7 @@ class Visualizer(BaseVisualizer):
 
         return True
         
-    def close(self):
+    def cleanup(self):
         """Close the display window."""
         logging.info("Closing windows..")
         cv2.destroyAllWindows()
