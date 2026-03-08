@@ -36,8 +36,6 @@ def main():
                 frame = source.get_frame()
                 ctx = FrameContext(frame, time.time())
 
-                print(event_manager.get_observers_overview())
-
                 event_manager.notify("on_frame", ctx)
 
                 if frame is None:
