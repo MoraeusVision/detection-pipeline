@@ -77,6 +77,23 @@ class TestVisualizer:
     @patch('cv2.resizeWindow')
     @patch('cv2.imshow')
     @patch('cv2.waitKey')
+    def test_show_with_boxes_does_not_mutate_input_frame(self, mock_waitkey, mock_imshow, mock_resize, mock_named):
+        """Test show draws on a copy instead of mutating the input frame."""
+        visualizer = Visualizer()
+        frame = np.zeros((20, 20, 3), dtype=np.uint8)
+        original = frame.copy()
+
+        mock_waitkey.return_value = 0
+
+        visualizer.show(frame, boxes=[[1, 1, 5, 5]])
+
+        assert np.array_equal(frame, original)
+        mock_imshow.assert_called_once()
+
+    @patch('cv2.namedWindow')
+    @patch('cv2.resizeWindow')
+    @patch('cv2.imshow')
+    @patch('cv2.waitKey')
     @patch('logging.info')
     def test_show_paused_frame(self, mock_logging, mock_waitkey, mock_imshow, mock_resize, mock_named):
         """Test show when paused, reuses last_frame."""
@@ -159,6 +176,27 @@ class TestVisualizer:
         assert result == True  # Continue showing
         assert visualizer.paused == True
         mock_logging.assert_called_once_with("Playback %s", "paused")
+
+    @patch('cv2.namedWindow')
+    @patch('cv2.resizeWindow')
+    @patch('cv2.imshow')
+    @patch('cv2.waitKey')
+    @patch('logging.info')
+    def test_show_space_resumes_when_already_paused(self, mock_logging, mock_waitkey, mock_imshow, mock_resize, mock_named):
+        """Test spacebar resumes playback from paused state."""
+        visualizer = Visualizer()
+        visualizer.paused = True
+        visualizer.last_frame = np.ones((100, 100, 3), dtype=np.uint8)
+
+        mock_waitkey.return_value = ord(' ')
+
+        result = visualizer.show(np.zeros((100, 100, 3), dtype=np.uint8))
+
+        assert result == True
+        assert visualizer.paused == False
+        mock_imshow.assert_called_once()
+        mock_waitkey.assert_called_once_with(0)
+        mock_logging.assert_called_once_with("Playback %s", "resumed")
 
     @patch('cv2.namedWindow')
     @patch('cv2.resizeWindow')

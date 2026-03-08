@@ -156,6 +156,25 @@ class TestStreamSource:
         
         mock_cap.release.assert_called_once()
 
+    def test_cleanup_removes_downloaded_youtube_artifacts(self, tmp_path):
+        """Test cleanup removes downloaded YouTube files and temp directory."""
+        download_dir = tmp_path / "youtube-download"
+        download_dir.mkdir()
+        downloaded_file = download_dir / "video.mp4"
+        downloaded_file.write_bytes(b"video")
+
+        source = object.__new__(StreamSource)
+        source.cap = MagicMock()
+        source.cap.isOpened.return_value = True
+        source.downloaded_path = str(downloaded_file)
+        source._temp_dir = download_dir
+
+        source.cleanup()
+
+        source.cap.release.assert_called_once()
+        assert not downloaded_file.exists()
+        assert not download_dir.exists()
+
 
 class TestUSBCameraSource:
     @patch('cv2.VideoCapture')
@@ -278,6 +297,15 @@ class TestSourceFactory:
         assert isinstance(source, ImageSource)
 
     @patch('os.path.isfile')
+    def test_create_image_uppercase_extension(self, mock_isfile):
+        """Test create handles uppercase image extensions."""
+        mock_isfile.return_value = True
+
+        source = SourceFactory.create("/path/to/image.JPEG")
+
+        assert isinstance(source, ImageSource)
+
+    @patch('os.path.isfile')
     @patch('cv2.VideoCapture')
     def test_create_video_mp4(self, mock_capture_class, mock_isfile):
         """Test create returns VideoSource for MP4 file."""
@@ -327,6 +355,19 @@ class TestSourceFactory:
         
         source = SourceFactory.create("/path/to/video.mkv")
         
+        assert isinstance(source, VideoSource)
+
+    @patch('os.path.isfile')
+    @patch('cv2.VideoCapture')
+    def test_create_video_uppercase_extension(self, mock_capture_class, mock_isfile):
+        """Test create handles uppercase video extensions."""
+        mock_isfile.return_value = True
+        mock_cap = MagicMock()
+        mock_cap.isOpened.return_value = True
+        mock_capture_class.return_value = mock_cap
+
+        source = SourceFactory.create("/path/to/video.MP4")
+
         assert isinstance(source, VideoSource)
 
     @patch('os.path.isfile')
