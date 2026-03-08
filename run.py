@@ -31,10 +31,12 @@ def main():
         is_image = isinstance(source, ImageSource) if source else False
 
         while True:
-            # only fetch a new frame if we aren't paused or if we have no frame yet
+            # Only fetch a new frame if we aren't paused or if we have no frame yet
             if frame is None or (visualizer and not visualizer.paused):
                 frame = source.get_frame()
                 ctx = FrameContext(frame, time.time())
+
+                print(event_manager.get_observers_overview())
 
                 event_manager.notify("on_frame", ctx)
 
