@@ -59,13 +59,6 @@ class VideoSource(BaseSource):
         """
         self.path = path
         self.cap = cv2.VideoCapture(self.path)
-        self.fps = self.cap.get(cv2.CAP_PROP_FPS)
-        # Protect against cameras/videos that report 0 or NaN
-        try:
-            if not self.fps or self.fps <= 0 or (isinstance(self.fps, float) and math.isnan(self.fps)):
-                self.fps = 30
-        except Exception:
-            self.fps = 30
 
         # check that video opened correctly
         if not self.cap.isOpened():
@@ -140,12 +133,6 @@ class StreamSource(BaseSource):
                 raise
 
             self.cap = cv2.VideoCapture(self.downloaded_path)
-            self.fps = self.cap.get(cv2.CAP_PROP_FPS)  # Used for setting the visualization FPS
-            try:
-                if not self.fps or self.fps <= 0 or (isinstance(self.fps, float) and math.isnan(self.fps)):
-                    self.fps = 30
-            except Exception:
-                self.fps = 30
         else:
             self.cap = cv2.VideoCapture(url)
             
@@ -199,13 +186,6 @@ class USBCameraSource(BaseSource):
 
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-        # Try to read FPS; fall back to sensible default if not available
-        self.fps = self.cap.get(cv2.CAP_PROP_FPS)
-        try:
-            if not self.fps or self.fps <= 0 or (isinstance(self.fps, float) and math.isnan(self.fps)):
-                self.fps = 30
-        except Exception:
-            self.fps = 30
 
     def get_frame(self):
         """
