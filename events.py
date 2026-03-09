@@ -67,16 +67,3 @@ class EventManager:
             overview[event] = [type(o).__name__ for o in observers]
 
         return overview
-
-
-class FrameContext:
-    def __init__(self, frame, timestamp):
-        """
-        Context object passed through the pipeline for each frame.
-
-        Args:
-            frame (np.ndarray): Image/frame data
-            timestamp (float): Time when the frame was captured/processed
-        """
-        self.frame = frame
-        self.timestamp = timestamp

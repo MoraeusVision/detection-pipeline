@@ -1,13 +1,14 @@
 
 import logging
+import time
 
 from source_factory import SourceFactory
 from detectors.detector_factory import DetectorFactory
-from events import EventManager, FrameContext
+from events import EventManager
+from pipeline_context import FrameContext
 from arguments import parse_arguments
 from visualization import Visualizer
 from utils import CleanupManager
-import time
 
 
 def main():
