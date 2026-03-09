@@ -28,7 +28,7 @@ def main():
 
     try:
         frame = None
-        is_image = source.is_static if source else False
+        is_static = source.is_static if source else False
 
         while True:
             # Only fetch a new frame if we aren't paused or if we have no frame yet
@@ -44,7 +44,7 @@ def main():
 
             # Show frame
             if visualizer is not None:
-                if not visualizer.show(frame=frame, is_image=is_image):
+                if not visualizer.show(frame=frame, is_image=is_static):
                     break
     except Exception:
         logging.exception("Unhandled error in main loop")
