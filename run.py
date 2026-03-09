@@ -2,6 +2,7 @@
 import logging
 
 from source_factory import SourceFactory
+from detectors.detector_factory import DetectorFactory
 from events import EventManager, FrameContext
 from arguments import parse_arguments
 from visualization import Visualizer
@@ -13,7 +14,8 @@ def main():
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
     args = parse_arguments()
-    source = SourceFactory.create(args.source)  # Returns the source depending on media
+    source = SourceFactory.create(source_path=args.source)  # Returns the source depending on media
+    model = DetectorFactory.create(detector_name=args.detector, model_path=args.model)
     visualizer = Visualizer() if args.show else None
 
     event_manager = EventManager()
@@ -40,6 +42,9 @@ def main():
                 event_manager.notify("on_frame", ctx)
 
                 if frame is None:
+                    break
+
+                if visualizer is None and is_static:
                     break
 
 

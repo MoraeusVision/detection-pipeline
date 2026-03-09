@@ -13,4 +13,20 @@ def parse_arguments():
         action="store_true",
         help="If set, visualizes the frames with bounding boxes"
     )
+    
+    parser.add_argument(
+        "--detector",
+        type=str,
+        required=True,
+        choices=["yolo", "mediapipe", "rfdetr"],
+        help="Detector type"
+    )
+
+    parser.add_argument(
+        "--model",
+        type=str,
+        required=True,
+        help="Model name"
+    )
+    
     return parser.parse_args()

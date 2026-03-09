@@ -67,7 +67,7 @@ class Visualizer(BaseVisualizer):
             key = cv2.waitKey(1) & 0xFF
 
         # Toggle pause with spacebar
-        if key == ord(' '):
+        if key == ord(' ') and not is_image:
             self.paused = not self.paused
             logging.info("Playback %s", "paused" if self.paused else "resumed")
             # after toggling pause we want to keep showing the same frame
