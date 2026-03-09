@@ -17,6 +17,12 @@ MAX_SIZE_MB = 300 # Just to not starting to download hour long youtube videos
 # Base source interface
 # -----------------------------
 class BaseSource(ABC):
+    @property
+    @abstractmethod
+    def is_static(self):
+        """Whether the source produces a single frame."""
+        pass
+
     @abstractmethod
     def get_frame(self):
         """Returns a frame"""
@@ -33,6 +39,10 @@ class BaseSource(ABC):
 class ImageSource(BaseSource):
     def __init__(self, path):
         self.path = path
+
+    @property
+    def is_static(self):
+        return True
         
 
     def get_frame(self):
@@ -63,6 +73,10 @@ class VideoSource(BaseSource):
         # check that video opened correctly
         if not self.cap.isOpened():
             raise ValueError(f"Could not open video: {self.path}")
+
+    @property
+    def is_static(self):
+        return False
 
     def get_frame(self):
         """
@@ -139,6 +153,10 @@ class StreamSource(BaseSource):
         if not self.cap.isOpened():
             raise ValueError(f"Could not open stream: {url}")
 
+    @property
+    def is_static(self):
+        return False
+
     def get_frame(self):
         """
         Returns a frame from the stream.
@@ -186,6 +204,10 @@ class USBCameraSource(BaseSource):
 
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+
+    @property
+    def is_static(self):
+        return False
 
     def get_frame(self):
         """

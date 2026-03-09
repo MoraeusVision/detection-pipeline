@@ -1,7 +1,7 @@
 
 import logging
 
-from source_factory import SourceFactory, ImageSource, VideoSource, StreamSource
+from source_factory import SourceFactory
 from events import EventManager, FrameContext
 from arguments import parse_arguments
 from visualization import Visualizer
@@ -28,7 +28,7 @@ def main():
 
     try:
         frame = None
-        is_image = isinstance(source, ImageSource) if source else False
+        is_image = source.is_static if source else False
 
         while True:
             # Only fetch a new frame if we aren't paused or if we have no frame yet

@@ -12,6 +12,12 @@ from source_factory import (
 
 
 class TestImageSource:
+    def test_is_static(self):
+        """Test image sources are marked as static."""
+        source = ImageSource("/path/to/image.jpg")
+
+        assert source.is_static is True
+
     @patch('cv2.imread')
     def test_get_frame_success(self, mock_imread):
         """Test get_frame returns image successfully."""
@@ -42,6 +48,17 @@ class TestImageSource:
 
 
 class TestVideoSource:
+    @patch('cv2.VideoCapture')
+    def test_is_static(self, mock_capture_class):
+        """Test video sources are not static."""
+        mock_cap = MagicMock()
+        mock_cap.isOpened.return_value = True
+        mock_capture_class.return_value = mock_cap
+
+        source = VideoSource("/path/to/video.mp4")
+
+        assert source.is_static is False
+
     @patch('cv2.VideoCapture')
     def test_init_success(self, mock_capture_class):
         """Test VideoSource initialization with valid video."""
@@ -111,6 +128,17 @@ class TestVideoSource:
 
 class TestStreamSource:
     @patch('cv2.VideoCapture')
+    def test_is_static(self, mock_capture_class):
+        """Test stream sources are not static."""
+        mock_cap = MagicMock()
+        mock_cap.isOpened.return_value = True
+        mock_capture_class.return_value = mock_cap
+
+        source = StreamSource("rtsp://example.com/stream")
+
+        assert source.is_static is False
+
+    @patch('cv2.VideoCapture')
     def test_init_rtsp_stream(self, mock_capture_class):
         """Test StreamSource with RTSP URL."""
         mock_cap = MagicMock()
@@ -177,6 +205,17 @@ class TestStreamSource:
 
 
 class TestUSBCameraSource:
+    @patch('cv2.VideoCapture')
+    def test_is_static(self, mock_capture_class):
+        """Test USB camera sources are not static."""
+        mock_cap = MagicMock()
+        mock_cap.isOpened.return_value = True
+        mock_capture_class.return_value = mock_cap
+
+        source = USBCameraSource(device_index=0)
+
+        assert source.is_static is False
+
     @patch('cv2.VideoCapture')
     def test_init_success(self, mock_capture_class):
         """Test USBCameraSource initialization with valid device."""
