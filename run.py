@@ -17,7 +17,8 @@ def main():
     visualizer = Visualizer() if args.show else None
 
     event_manager = EventManager()
-    event_manager.register("on_frame", visualizer)
+    if visualizer:
+        event_manager.register("on_frame", visualizer)
 
     # Cleanup manager collects cleanup methods and run them in the end
     cleanup = CleanupManager()
@@ -32,7 +33,7 @@ def main():
 
         while True:
             # Only fetch a new frame if we aren't paused or if we have no frame yet
-            if frame is None or (visualizer and not visualizer.paused):
+            if frame is None or visualizer is None or not visualizer.paused:
                 frame = source.get_frame()
                 ctx = FrameContext(frame, time.time())
 
