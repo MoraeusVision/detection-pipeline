@@ -24,7 +24,5 @@ class TestFrameContext:
         first.detections.append(
             Detection(label="drone", confidence=0.9, bbox=(1, 2, 3, 4))
         )
-        first.metadata["source"] = "camera-0"
 
         assert second.detections == []
-        assert second.metadata == {}

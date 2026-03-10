@@ -13,10 +13,13 @@ pip install -r requirements.txt
 
 ## Usage
 
-Run the pipeline with a source (image, video, stream URL, or camera index):
+Run the pipeline with a project config:
 
 ```bash
-python run.py --source example_media/drones --show
+python run.py --config projects/example_project/config.json
 ```
 
-Use `--show` to enable visualization.
+The project config keeps project-specific values together, such as source,
+detector type, and model path. Paths inside the config are resolved relative to
+the config file, which makes it easier to keep each project's config and model
+files in the same folder.

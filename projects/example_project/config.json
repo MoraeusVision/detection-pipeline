@@ -1,0 +1,8 @@
+{
+  "source": "../../example_media/drones/drone1.jpg",
+  "show": true,
+  "detector": {
+    "type": "rfdetr",
+    "model_path": "models/checkpoint_best_total.pth"
+  }
+}

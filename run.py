@@ -2,6 +2,7 @@
 import logging
 
 from source_factory import SourceFactory
+from config_loader import load_project_config
 from detectors.detector_factory import DetectorFactory
 from events import EventManager
 from pipeline import DetectionPipeline
@@ -14,9 +15,13 @@ def main():
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
     args = parse_arguments()
-    source = SourceFactory.create(source_path=args.source)  # Returns the source depending on media
-    detector = DetectorFactory.create(detector_name=args.detector, model_path=args.model)
-    visualizer = Visualizer() if args.show else None
+    config = load_project_config(args.config)
+    source = SourceFactory.create(source_path=config.source)
+    detector = DetectorFactory.create(
+        detector_name=config.detector.type,
+        model_path=config.detector.model_path,
+    )
+    visualizer = Visualizer() if config.show else None
 
     event_manager = EventManager()
 

@@ -10,21 +10,23 @@ class TestRun:
     @patch("run.EventManager")
     @patch("run.DetectorFactory.create")
     @patch("run.SourceFactory.create")
+    @patch("run.load_project_config")
     @patch("run.parse_arguments")
     def test_main_builds_pipeline_without_visualizer(
         self,
         mock_parse_arguments,
+        mock_load_project_config,
         mock_source_create,
         mock_detector_create,
         mock_event_manager_class,
         mock_cleanup_manager_class,
         mock_pipeline_class,
     ):
-        mock_parse_arguments.return_value = SimpleNamespace(
+        mock_parse_arguments.return_value = SimpleNamespace(config="projects/demo/config.json")
+        mock_load_project_config.return_value = SimpleNamespace(
             source="video.mp4",
             show=False,
-            detector="rfdetr",
-            model="model.pth",
+            detector=SimpleNamespace(type="rfdetr", model_path="model.pth"),
         )
 
         mock_source = MagicMock()
@@ -60,10 +62,12 @@ class TestRun:
     @patch("run.EventManager")
     @patch("run.DetectorFactory.create")
     @patch("run.SourceFactory.create")
+    @patch("run.load_project_config")
     @patch("run.parse_arguments")
     def test_main_builds_pipeline_with_visualizer(
         self,
         mock_parse_arguments,
+        mock_load_project_config,
         mock_source_create,
         mock_detector_create,
         mock_event_manager_class,
@@ -71,11 +75,11 @@ class TestRun:
         mock_pipeline_class,
         mock_visualizer_class,
     ):
-        mock_parse_arguments.return_value = SimpleNamespace(
+        mock_parse_arguments.return_value = SimpleNamespace(config="projects/demo/config.json")
+        mock_load_project_config.return_value = SimpleNamespace(
             source="image.jpg",
             show=True,
-            detector="rfdetr",
-            model="model.pth",
+            detector=SimpleNamespace(type="rfdetr", model_path="model.pth"),
         )
 
         mock_source = MagicMock()
