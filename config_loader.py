@@ -1,13 +1,15 @@
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 
 @dataclass(frozen=True)
 class DetectorConfig:
     # Describes the detector strategy to instantiate.
     type: str
-    model_path: str
+    model_path: str | None = None
+    params: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -27,17 +29,22 @@ def load_project_config(config_path: str | Path) -> ProjectConfig:
         # Pull out the required fields early so invalid configs fail fast.
         detector = raw_config["detector"]
         detector_type = detector["type"]
-        model_path = detector["model_path"]
+        model_path = detector.get("model_path")
+        detector_params = detector.get("params", {})
         source = raw_config["source"]
     except KeyError as exc:
         raise ValueError(f"Missing required config field: {exc.args[0]}") from exc
+
+    if not isinstance(detector_params, dict):
+        raise ValueError("detector.params must be an object")
 
     return ProjectConfig(
         source=_resolve_source_path(source, path.parent),
         show=bool(raw_config.get("show", False)),
         detector=DetectorConfig(
             type=detector_type,
-            model_path=_resolve_file_path(model_path, path.parent),
+            model_path=_resolve_file_path(model_path, path.parent) if model_path else None,
+            params=detector_params,
         ),
         config_path=path,
     )

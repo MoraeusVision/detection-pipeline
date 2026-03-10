@@ -26,7 +26,7 @@ class TestRun:
         mock_load_project_config.return_value = SimpleNamespace(
             source="video.mp4",
             show=False,
-            detector=SimpleNamespace(type="rfdetr", model_path="model.pth"),
+            detector=SimpleNamespace(type="rfdetr", model_path="model.pth", params={}),
         )
 
         mock_source = MagicMock()
@@ -52,6 +52,7 @@ class TestRun:
             event_manager=mock_event_manager,
             visualizer=None,
         )
+        mock_detector_create.assert_called_once_with(mock_load_project_config.return_value.detector)
         mock_pipeline.run.assert_called_once()
         mock_cleanup.add.assert_called_once_with(mock_source.cleanup)
         mock_cleanup.run.assert_called_once()
@@ -79,7 +80,7 @@ class TestRun:
         mock_load_project_config.return_value = SimpleNamespace(
             source="image.jpg",
             show=True,
-            detector=SimpleNamespace(type="rfdetr", model_path="model.pth"),
+            detector=SimpleNamespace(type="rfdetr", model_path="model.pth", params={}),
         )
 
         mock_source = MagicMock()
@@ -108,6 +109,7 @@ class TestRun:
             event_manager=mock_event_manager,
             visualizer=mock_visualizer,
         )
+        mock_detector_create.assert_called_once_with(mock_load_project_config.return_value.detector)
         mock_pipeline.run.assert_called_once()
         mock_cleanup.add.assert_any_call(mock_source.cleanup)
         mock_cleanup.add.assert_any_call(mock_visualizer.cleanup)

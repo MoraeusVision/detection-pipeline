@@ -17,10 +17,7 @@ def main():
     args = parse_arguments()
     config = load_project_config(args.config)
     source = SourceFactory.create(source_path=config.source)
-    detector = DetectorFactory.create(
-        detector_name=config.detector.type,
-        model_path=config.detector.model_path,
-    )
+    detector = DetectorFactory.create(config.detector)
     visualizer = Visualizer() if config.show else None
 
     event_manager = EventManager()
