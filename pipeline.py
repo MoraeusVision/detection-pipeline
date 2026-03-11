@@ -22,6 +22,9 @@ class BasePipeline(ABC):
             ctx = self.process_frame(ctx)
 
             self.notify("on_frame", ctx)
+            if not ctx.should_continue:
+                break
+
             if is_static:
                 break
 
