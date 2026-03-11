@@ -17,5 +17,11 @@ class Detection:
 class FrameContext:
     frame: Any
     timestamp: float
-    is_static: bool
     detections: list[Detection] = field(default_factory=list)
+
+
+@dataclass
+class PipelineContext:
+    is_static: bool
+    should_continue: bool
+    frame_context: FrameContext

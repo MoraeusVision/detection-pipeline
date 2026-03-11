@@ -8,4 +8,4 @@ class RFDETRDetector(BaseDetector):
         self.model_path = model_path
 
     def detect(self, ctx: FrameContext) -> FrameContext:
-        pass
+        return ctx

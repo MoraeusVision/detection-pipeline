@@ -30,7 +30,7 @@ class Visualizer(BaseVisualizer):
 
     def handle_event(self, event, data):
         if event == "on_frame":
-            self.show(frame=data.frame, is_static=data.is_static)
+            self.show(frame=data.frame_context.frame, is_static=data.is_static)
 
     def show(self, frame, boxes=None, is_static=False):
         """

@@ -1,7 +1,7 @@
 import time
 from abc import ABC, abstractmethod
 
-from pipeline_context import FrameContext
+from pipeline_context import FrameContext, PipelineContext
 
 
 class BasePipeline(ABC):
@@ -26,21 +26,23 @@ class BasePipeline(ABC):
                 break
 
     def create_context_from_frame(self, frame, is_static):
-        ctx = FrameContext(frame, time.time(), is_static)
-        return ctx
+        frame_context = FrameContext(frame=frame, timestamp=time.time())
+        return PipelineContext(
+            is_static=is_static,
+            should_continue=True,
+            frame_context=frame_context,
+        )
 
     def notify(self, event_name, data=None):
         if self.event_manager is not None:
             self.event_manager.notify(event_name, data)
 
     @abstractmethod
-    def process_frame(self, frame):
+    def process_frame(self, ctx):
         pass
 
 
 class DetectionPipeline(BasePipeline):
     def process_frame(self, ctx):
-        frame = ctx.frame
-        ctx.detections = self.model.detect(frame)
-
+        ctx.frame_context = self.model.detect(ctx.frame_context)
         return ctx
