@@ -10,6 +10,7 @@ from arguments import parse_arguments
 from visualization import Visualizer
 from utils import CleanupManager
 from config_loader import read_from_config
+from pipeline import DetectionPipeline
 
 
 def main():
@@ -26,6 +27,8 @@ def main():
     if visualizer:
         event_manager.register("on_frame", visualizer)
 
+    pipeline = DetectionPipeline(source=source, model=model, event_manager=event_manager)
+
     # Cleanup manager collects cleanup methods and run them in the end
     cleanup = CleanupManager()
     if source:
@@ -34,28 +37,7 @@ def main():
         cleanup.add(visualizer.cleanup)
 
     try:
-        frame = None
-        is_static = source.is_static if source else False
-
-        while True:
-            # Only fetch a new frame if we aren't paused or if we have no frame yet
-            if frame is None or visualizer is None or not visualizer.paused:
-                frame = source.get_frame()
-                ctx = FrameContext(frame, time.time())
-
-                event_manager.notify("on_frame", ctx)
-
-                if frame is None:
-                    break
-
-                if visualizer is None and is_static:
-                    break
-
-
-            # Show frame
-            if visualizer is not None:
-                if not visualizer.show(frame=frame, is_image=is_static):
-                    break
+        pipeline.run()
     except Exception:
         logging.exception("Unhandled error in main loop")
     finally:

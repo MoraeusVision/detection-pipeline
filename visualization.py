@@ -30,9 +30,9 @@ class Visualizer(BaseVisualizer):
 
     def handle_event(self, event, data):
         if event == "on_frame":
-            self.show(data.frame)
+            self.show(frame=data.frame, is_static=data.is_static)
 
-    def show(self, frame, boxes=None, is_image=False):
+    def show(self, frame, boxes=None, is_static=False):
         """
         Display a single frame with optional bounding boxes.
 
@@ -41,7 +41,7 @@ class Visualizer(BaseVisualizer):
             boxes (list of [x1, y1, x2, y2], optional): Bounding boxes to draw
         """
         # choose which frame to display; if we are paused, replay last_frame
-        if self.paused and self.last_frame is not None and not is_image:
+        if self.paused and self.last_frame is not None and not is_static:
             display_frame = self.last_frame.copy()
         else:
             # Make a copy so original frame is not modified
@@ -57,17 +57,22 @@ class Visualizer(BaseVisualizer):
 
         # Show the frame in the window
         cv2.imshow(self.window_name, display_frame)
-        
-        # Determine how long to wait for a key press. If paused or showing
-        # a static image we block indefinitely; otherwise we proceed with
-        # a short delay.
-        if is_image or self.paused:
-            key = cv2.waitKey(0) & 0xFF  # wait until key is pressed
+
+        if is_static:
+            while True:
+                key = cv2.waitKey(0) & 0xFF
+                if key == ord('q'):
+                    return False
+
+        # Determine how long to wait for a key press. If paused we block
+        # indefinitely; otherwise we proceed with a short delay.
+        if self.paused:
+            key = cv2.waitKey(0) & 0xFF
         else:
             key = cv2.waitKey(1) & 0xFF
 
         # Toggle pause with spacebar
-        if key == ord(' ') and not is_image:
+        if key == ord(' ') and not is_static:
             self.paused = not self.paused
             logging.info("Playback %s", "paused" if self.paused else "resumed")
             # after toggling pause we want to keep showing the same frame

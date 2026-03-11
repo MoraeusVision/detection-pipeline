@@ -17,4 +17,5 @@ class Detection:
 class FrameContext:
     frame: Any
     timestamp: float
+    is_static: bool
     detections: list[Detection] = field(default_factory=list)
