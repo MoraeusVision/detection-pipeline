@@ -9,15 +9,18 @@ from pipeline_context import FrameContext
 from arguments import parse_arguments
 from visualization import Visualizer
 from utils import CleanupManager
+from config_loader import read_from_config
 
 
 def main():
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
     args = parse_arguments()
-    source = SourceFactory.create(source_path=args.source)  # Returns the source depending on media
-    model = DetectorFactory.create(detector_name=args.detector, model_path=args.model)
-    visualizer = Visualizer() if args.show else None
+    config = read_from_config(args.config)
+    
+    source = SourceFactory.create(source_path=config["source"])  # Returns the source depending on media
+    model = DetectorFactory.create(detector_name=config["detector"], model_path=config["model_path"])
+    visualizer = Visualizer() if config["show"] else None
 
     event_manager = EventManager()
     if visualizer:
