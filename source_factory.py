@@ -196,6 +196,8 @@ class USBCameraSource(BaseSource):
             width (int): Desired capture width
             height (int): Desired capture height
         """
+        logging.info("Starting up camera..")
+
         # Open camera
         self.cap = cv2.VideoCapture(device_index)
         
