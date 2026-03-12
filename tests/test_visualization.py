@@ -38,11 +38,17 @@ class TestVisualizer:
         """Test handle_event calls show for on_frame event."""
         visualizer = Visualizer()
         mock_data = MagicMock()
-        mock_data.frame = np.zeros((100, 100, 3), dtype=np.uint8)
+        mock_data.frame_context.frame = np.zeros((100, 100, 3), dtype=np.uint8)
+        mock_data.is_static = False
+        mock_show.return_value = True
         
         visualizer.handle_event("on_frame", mock_data)
         
-        mock_show.assert_called_once_with(mock_data.frame)
+        mock_show.assert_called_once_with(
+            frame=mock_data.frame_context.frame,
+            is_static=False,
+        )
+        assert mock_data.should_continue is True
 
     @patch('cv2.namedWindow')
     @patch('cv2.resizeWindow')
@@ -117,16 +123,16 @@ class TestVisualizer:
     @patch('cv2.imshow')
     @patch('cv2.waitKey')
     @patch('logging.info')
-    def test_show_image_mode(self, mock_logging, mock_waitkey, mock_imshow, mock_resize, mock_named):
-        """Test show in image mode (blocks indefinitely)."""
+    def test_show_static_mode_exits_on_q(self, mock_logging, mock_waitkey, mock_imshow, mock_resize, mock_named):
+        """Test show in static mode blocks until q is pressed."""
         visualizer = Visualizer()
         frame = np.ones((100, 100, 3), dtype=np.uint8)
         
-        mock_waitkey.return_value = 0
+        mock_waitkey.return_value = ord('q')
         
-        result = visualizer.show(frame, is_image=True)
+        result = visualizer.show(frame, is_static=True)
         
-        assert result == True
+        assert result == False
         mock_waitkey.assert_called_once_with(0)  # Wait indefinitely for images
 
     @patch('cv2.namedWindow')

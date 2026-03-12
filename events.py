@@ -1,7 +1,7 @@
 class EventManager:
     def __init__(self):
         # Dictionary mapping event names to a list of observers
-        # Example: {"on_frame": [Visualizer, Logger]}
+        # Example: {"on_inference_result": [Visualizer, Logger]}
         self._observers = {}
 
     def register(self, event_name, observer):
@@ -9,7 +9,7 @@ class EventManager:
         Register an observer for a specific event.
 
         Args:
-            event_name (str): Name of the event (e.g., "on_frame")
+            event_name (str): Name of the event (e.g., "on_inference_result")
             observer (object): Object implementing handle_event()
         """
         # Create a new list if this event has no observers yet
@@ -55,7 +55,7 @@ class EventManager:
             dict: Mapping of event names to observer class names
                   Example:
                   {
-                      "on_frame": ["Visualizer", "PersonDetector"],
+                      "on_inference_result": ["Visualizer", "PersonDetector"],
                       "on_prediction": ["Logger"]
                   }
         """

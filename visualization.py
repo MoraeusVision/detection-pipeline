@@ -29,7 +29,7 @@ class Visualizer(BaseVisualizer):
         cv2.resizeWindow(self.window_name, self.width, self.height)
 
     def handle_event(self, event, data):
-        if event == "on_frame":
+        if event == "on_inference_result":
             data.should_continue = self.show(
                 frame=data.frame_context.frame,
                 is_static=data.is_static,

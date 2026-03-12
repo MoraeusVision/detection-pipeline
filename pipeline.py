@@ -21,7 +21,7 @@ class BasePipeline(ABC):
             ctx = self.create_context_from_frame(frame, is_static)
             ctx = self.process_frame(ctx)
 
-            self.notify("on_frame", ctx)
+            self.notify("on_inference_result", ctx)
             if not ctx.should_continue:
                 break
 

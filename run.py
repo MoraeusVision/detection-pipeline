@@ -25,10 +25,10 @@ def main():
 
     event_manager = EventManager()
     if visualizer:
-        event_manager.register("on_frame", visualizer)
+        event_manager.register("on_inference_result", visualizer)
 
     pipeline = DetectionPipeline(source=source, model=model, event_manager=event_manager)
-
+    
     # Cleanup manager collects cleanup methods and run them in the end
     cleanup = CleanupManager()
     if source:

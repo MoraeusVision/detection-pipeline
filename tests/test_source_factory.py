@@ -265,7 +265,9 @@ class TestUSBCameraSource:
         source.cleanup()
         
         mock_cap.release.assert_called_once()
-        mock_logging.assert_called_once_with("Closing USB camera..")
+        assert mock_logging.call_count == 2
+        mock_logging.assert_any_call("Starting up camera..")
+        mock_logging.assert_any_call("Closing USB camera..")
 
 
 class TestSourceFactory:

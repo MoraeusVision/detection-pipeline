@@ -5,7 +5,8 @@ import run
 
 
 class TestRun:
-    @patch("run.time.time", return_value=123.0)
+    @patch("run.DetectionPipeline")
+    @patch("run.read_from_config")
     @patch("run.CleanupManager")
     @patch("run.EventManager")
     @patch("run.DetectorFactory.create")
@@ -18,20 +19,21 @@ class TestRun:
         mock_detector_create,
         mock_event_manager_class,
         mock_cleanup_manager_class,
-        mock_time,
+        mock_read_from_config,
+        mock_pipeline_class,
     ):
-        mock_parse_arguments.return_value = SimpleNamespace(
-            source="video.mp4",
-            show=False,
-            detector="rfdetr",
-            model="model.pth",
-        )
+        mock_parse_arguments.return_value = SimpleNamespace(config="project/config.json")
+        mock_read_from_config.return_value = {
+            "source": "video.mp4",
+            "show": False,
+            "detector": "rfdetr",
+            "model_path": "model.pth",
+        }
 
         mock_source = MagicMock()
-        mock_source.is_static = False
-        mock_source.get_frame.side_effect = ["frame-1", None]
         mock_source_create.return_value = mock_source
-        mock_detector_create.return_value = MagicMock()
+        mock_model = MagicMock()
+        mock_detector_create.return_value = mock_model
 
         mock_event_manager = MagicMock()
         mock_event_manager_class.return_value = mock_event_manager
@@ -39,38 +41,55 @@ class TestRun:
         mock_cleanup = MagicMock()
         mock_cleanup_manager_class.return_value = mock_cleanup
 
+        mock_pipeline = MagicMock()
+        mock_pipeline_class.return_value = mock_pipeline
+
         run.main()
 
+        mock_read_from_config.assert_called_once_with("project/config.json")
+        mock_source_create.assert_called_once_with(source_path="video.mp4")
+        mock_detector_create.assert_called_once_with(
+            detector_name="rfdetr",
+            model_path="model.pth",
+        )
         mock_event_manager.register.assert_not_called()
-        assert mock_event_manager.notify.call_count == 2
+        mock_pipeline_class.assert_called_once_with(
+            source=mock_source,
+            model=mock_model,
+            event_manager=mock_event_manager,
+        )
+        mock_pipeline.run.assert_called_once_with()
         mock_cleanup.add.assert_called_once_with(mock_source.cleanup)
         mock_cleanup.run.assert_called_once()
 
-    @patch("run.time.time", return_value=123.0)
+    @patch("run.logging.exception")
+    @patch("run.DetectionPipeline")
+    @patch("run.read_from_config")
     @patch("run.CleanupManager")
     @patch("run.EventManager")
     @patch("run.DetectorFactory.create")
     @patch("run.SourceFactory.create")
     @patch("run.parse_arguments")
-    def test_main_without_visualizer_exits_after_single_static_frame(
+    def test_main_runs_cleanup_when_pipeline_raises(
         self,
         mock_parse_arguments,
         mock_source_create,
         mock_detector_create,
         mock_event_manager_class,
         mock_cleanup_manager_class,
-        mock_time,
+        mock_read_from_config,
+        mock_pipeline_class,
+        mock_logging_exception,
     ):
-        mock_parse_arguments.return_value = SimpleNamespace(
-            source="image.jpg",
-            show=False,
-            detector="rfdetr",
-            model="model.pth",
-        )
+        mock_parse_arguments.return_value = SimpleNamespace(config="project/config.json")
+        mock_read_from_config.return_value = {
+            "source": "image.jpg",
+            "show": False,
+            "detector": "rfdetr",
+            "model_path": "model.pth",
+        }
 
         mock_source = MagicMock()
-        mock_source.is_static = True
-        mock_source.get_frame.return_value = "frame-1"
         mock_source_create.return_value = mock_source
         mock_detector_create.return_value = MagicMock()
 
@@ -80,8 +99,13 @@ class TestRun:
         mock_cleanup = MagicMock()
         mock_cleanup_manager_class.return_value = mock_cleanup
 
+        mock_pipeline = MagicMock()
+        mock_pipeline.run.side_effect = RuntimeError("boom")
+        mock_pipeline_class.return_value = mock_pipeline
+
         run.main()
 
-        mock_source.get_frame.assert_called_once()
-        mock_event_manager.notify.assert_called_once()
+        mock_event_manager.register.assert_not_called()
+        mock_pipeline.run.assert_called_once_with()
+        mock_logging_exception.assert_called_once_with("Unhandled error in main loop")
         mock_cleanup.run.assert_called_once()
