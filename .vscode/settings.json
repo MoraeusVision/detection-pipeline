@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^C:/Users/daniem/detection-pipeline/\\.venv/Scripts/python\\.exe -m pytest tests/test_visualization\\.py$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

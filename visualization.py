@@ -30,12 +30,19 @@ class Visualizer(BaseVisualizer):
 
     def handle_event(self, event, data):
         if event == "on_inference_result":
+            boxes = [detection.bbox for detection in data.frame_context.detections] or None
+            labels = [
+                f"{detection.label} {detection.confidence:.2f}"
+                for detection in data.frame_context.detections
+            ] or None
             data.should_continue = self.show(
                 frame=data.frame_context.frame,
+                boxes=boxes,
+                labels=labels,
                 is_static=data.is_static,
             )
 
-    def show(self, frame, boxes=None, is_static=False):
+    def show(self, frame, boxes=None, labels=None, is_static=False):
         """
         Display a single frame with optional bounding boxes.
 
@@ -54,9 +61,21 @@ class Visualizer(BaseVisualizer):
 
         # Draw bounding boxes if provided
         if boxes is not None:
-            for box in boxes:
+            for index, box in enumerate(boxes):
                 x1, y1, x2, y2 = box
                 cv2.rectangle(display_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                if labels is not None and index < len(labels):
+                    text_origin = (x1, max(20, y1 - 10))
+                    cv2.putText(
+                        display_frame,
+                        labels[index],
+                        text_origin,
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.6,
+                        (0, 255, 0),
+                        2,
+                        cv2.LINE_AA,
+                    )
 
         # Show the frame in the window
         cv2.imshow(self.window_name, display_frame)

@@ -20,7 +20,11 @@ def main():
     config = read_from_config(args.config)
     
     source = SourceFactory.create(source_path=config["source"])  # Returns the source depending on media
-    model = DetectorFactory.create(detector_name=config["detector"], model_path=config["model_path"])
+    model = DetectorFactory.create(
+        detector_name=config["detector"],
+        model_path=config["model_path"],
+        confidence_threshold=config.get("conf", 0.5),
+    )
     visualizer = Visualizer() if config["show"] else None
 
     event_manager = EventManager()

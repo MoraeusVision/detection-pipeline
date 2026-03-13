@@ -8,9 +8,6 @@ class EventManager:
         """
         Register an observer for a specific event.
 
-        Args:
-            event_name (str): Name of the event (e.g., "on_inference_result")
-            observer (object): Object implementing handle_event()
         """
         # Create a new list if this event has no observers yet
         if event_name not in self._observers:
@@ -23,9 +20,6 @@ class EventManager:
         """
         Notify all observers subscribed to a specific event.
 
-        Args:
-            event_name (str): Event that occurred
-            data (any): Optional data passed to observers
         """
         # If no observers are registered for this event, do nothing
         if event_name not in self._observers:
@@ -39,11 +33,6 @@ class EventManager:
         """
         Return all observers registered for a given event.
 
-        Args:
-            event_name (str): Event name
-
-        Returns:
-            list: List of observers (empty if none exist)
         """
         return self._observers.get(event_name, [])
     
@@ -51,13 +40,6 @@ class EventManager:
         """
         Return a simplified overview of all registered observers.
 
-        Returns:
-            dict: Mapping of event names to observer class names
-                  Example:
-                  {
-                      "on_inference_result": ["Visualizer", "PersonDetector"],
-                      "on_prediction": ["Logger"]
-                  }
         """
         overview = {}
 

@@ -2,7 +2,6 @@
 import os
 import shutil
 import tempfile
-import math
 import logging
 from abc import ABC, abstractmethod
 import cv2
@@ -11,7 +10,7 @@ from pathlib import Path
 # -----------------------------
 # Constants
 # -----------------------------
-MAX_SIZE_MB = 300 # Just to not starting to download hour long youtube videos
+MAX_SIZE_MB = 400 # Just to not starting to download hour long youtube videos
 
 # -----------------------------
 # Base source interface

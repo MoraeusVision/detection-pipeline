@@ -39,6 +39,10 @@ class TestVisualizer:
         visualizer = Visualizer()
         mock_data = MagicMock()
         mock_data.frame_context.frame = np.zeros((100, 100, 3), dtype=np.uint8)
+        mock_data.frame_context.detections = [
+            MagicMock(bbox=(1, 2, 3, 4), label="drone", confidence=0.95),
+            MagicMock(bbox=(5, 6, 7, 8), label="bird", confidence=0.72),
+        ]
         mock_data.is_static = False
         mock_show.return_value = True
         
@@ -46,6 +50,8 @@ class TestVisualizer:
         
         mock_show.assert_called_once_with(
             frame=mock_data.frame_context.frame,
+            boxes=[(1, 2, 3, 4), (5, 6, 7, 8)],
+            labels=["drone 0.95", "bird 0.72"],
             is_static=False,
         )
         assert mock_data.should_continue is True
@@ -139,16 +145,18 @@ class TestVisualizer:
     @patch('cv2.resizeWindow')
     @patch('cv2.imshow')
     @patch('cv2.waitKey')
+    @patch('cv2.putText')
     @patch('cv2.rectangle')
-    def test_show_with_boxes(self, mock_rectangle, mock_waitkey, mock_imshow, mock_resize, mock_named):
-        """Test show draws bounding boxes."""
+    def test_show_with_boxes(self, mock_rectangle, mock_puttext, mock_waitkey, mock_imshow, mock_resize, mock_named):
+        """Test show draws bounding boxes and labels."""
         visualizer = Visualizer()
         frame = np.ones((100, 100, 3), dtype=np.uint8)
         boxes = [[10, 10, 50, 50], [20, 20, 60, 60]]
+        labels = ["drone 0.95", "bird 0.72"]
         
         mock_waitkey.return_value = 0
         
-        visualizer.show(frame, boxes=boxes)
+        visualizer.show(frame, boxes=boxes, labels=labels)
         
         calls = mock_rectangle.call_args_list
         assert len(calls) == 2
@@ -164,6 +172,11 @@ class TestVisualizer:
         assert calls[1][0][2] == (60, 60)
         assert calls[1][0][3] == (0, 255, 0)
         assert calls[1][0][4] == 2
+
+        text_calls = mock_puttext.call_args_list
+        assert len(text_calls) == 2
+        assert text_calls[0][0][1] == "drone 0.95"
+        assert text_calls[1][0][1] == "bird 0.72"
 
     @patch('cv2.namedWindow')
     @patch('cv2.resizeWindow')

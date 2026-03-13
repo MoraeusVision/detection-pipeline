@@ -51,6 +51,7 @@ class TestRun:
         mock_detector_create.assert_called_once_with(
             detector_name="rfdetr",
             model_path="model.pth",
+            confidence_threshold=0.5,
         )
         mock_event_manager.register.assert_not_called()
         mock_pipeline_class.assert_called_once_with(
