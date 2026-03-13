@@ -34,15 +34,15 @@ class TestVisualizer:
     @patch('cv2.namedWindow')
     @patch('cv2.resizeWindow')
     @patch('visualization.Visualizer.show')
-    def test_handle_event_on_frame(self, mock_show, mock_resize, mock_named):
-        """Test handle_event calls show for on_frame event."""
+    def test_handle_event_on_inference_result(self, mock_show, mock_resize, mock_named):
+        """Test handle_event calls show for on_inference_result event."""
         visualizer = Visualizer()
         mock_data = MagicMock()
         mock_data.frame_context.frame = np.zeros((100, 100, 3), dtype=np.uint8)
         mock_data.is_static = False
         mock_show.return_value = True
         
-        visualizer.handle_event("on_frame", mock_data)
+        visualizer.handle_event("on_inference_result", mock_data)
         
         mock_show.assert_called_once_with(
             frame=mock_data.frame_context.frame,
