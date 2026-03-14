@@ -54,10 +54,10 @@ class Visualizer(BaseVisualizer):
         if self.paused and self.last_frame is not None and not is_static:
             display_frame = self.last_frame.copy()
         else:
-            # Make a copy so original frame is not modified
-            display_frame = frame.copy()
-            # remember the frame so pausing can reuse it
-            self.last_frame = display_frame
+            # Store a clean copy so pause mode does not redraw boxes on top
+            # of an already-annotated frame.
+            self.last_frame = frame.copy()
+            display_frame = self.last_frame.copy()
 
         # Draw bounding boxes if provided
         if boxes is not None:
