@@ -1,7 +1,7 @@
 {
-	"source": "example_media/drones/vid_drone2.mp4",
+	"source": "https://www.youtube.com/shorts/bHBORz_c6r4",
 	"detector": "rfdetr",
 	"model_path": "project/model_content/checkpoint_best_ema.pth",
 	"show": true,
-    "conf": 0.5
+    "conf": 0.2
 }
