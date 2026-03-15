@@ -49,6 +49,7 @@ class BasePipeline(ABC):
 class DetectionPipeline(BasePipeline):
     def process_frame(self, ctx):
         ctx.frame_context = self.model.detect(ctx.frame_context)
+        # Only apply tracking to sequential sources.
         if self.tracker is not None and not ctx.is_static:
             ctx.frame_context.detections = self.tracker.update(
                 ctx.frame_context.detections,

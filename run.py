@@ -25,10 +25,10 @@ def main():
         confidence_threshold=config.get("conf", 0.5),
     )
     tracker = None
+    # Only create a tracker for non-static sources.
     if config.get("tracker") and not source.is_static:
         tracker = TrackerFactory.create(
             tracker_name=config["tracker"],
-            config=config.get("tracker_config"),
         )
 
     visualizer = Visualizer() if config["show"] else None

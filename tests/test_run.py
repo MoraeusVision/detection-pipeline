@@ -145,7 +145,6 @@ class TestRun:
             "show": False,
             "detector": "rfdetr",
             "tracker": "bytetrack",
-            "tracker_config": {"frame_rate": 25},
             "model_path": "model.pth",
         }
 
@@ -171,7 +170,6 @@ class TestRun:
 
         mock_tracker_create.assert_called_once_with(
             tracker_name="bytetrack",
-            config={"frame_rate": 25},
         )
         mock_pipeline_class.assert_called_once_with(
             source=mock_source,
