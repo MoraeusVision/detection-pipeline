@@ -5,9 +5,10 @@ from pipeline_context import FrameContext, PipelineContext
 
 
 class BasePipeline(ABC):
-    def __init__(self, source, model, event_manager=None):
+    def __init__(self, source, model, tracker=None, event_manager=None):
         self.source = source
         self.model = model
+        self.tracker = tracker
         self.event_manager = event_manager
 
     def run(self):
@@ -48,4 +49,9 @@ class BasePipeline(ABC):
 class DetectionPipeline(BasePipeline):
     def process_frame(self, ctx):
         ctx.frame_context = self.model.detect(ctx.frame_context)
+        if self.tracker is not None and not ctx.is_static:
+            ctx.frame_context.detections = self.tracker.update(
+                ctx.frame_context.detections,
+                ctx.frame_context.frame,
+            )
         return ctx

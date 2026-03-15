@@ -40,8 +40,8 @@ class TestVisualizer:
         mock_data = MagicMock()
         mock_data.frame_context.frame = np.zeros((100, 100, 3), dtype=np.uint8)
         mock_data.frame_context.detections = [
-            MagicMock(bbox=(1, 2, 3, 4), label="drone", confidence=0.95),
-            MagicMock(bbox=(5, 6, 7, 8), label="bird", confidence=0.72),
+            MagicMock(bbox=(1, 2, 3, 4), label="drone", confidence=0.95, track_id=7),
+            MagicMock(bbox=(5, 6, 7, 8), label="bird", confidence=0.72, track_id=None),
         ]
         mock_data.is_static = False
         mock_show.return_value = True
@@ -51,10 +51,19 @@ class TestVisualizer:
         mock_show.assert_called_once_with(
             frame=mock_data.frame_context.frame,
             boxes=[(1, 2, 3, 4), (5, 6, 7, 8)],
-            labels=["drone 0.95", "bird 0.72"],
+            labels=["#7 drone 0.95", "bird 0.72"],
             is_static=False,
         )
         assert mock_data.should_continue is True
+
+    @patch('cv2.namedWindow')
+    @patch('cv2.resizeWindow')
+    def test_format_detection_label_includes_track_id(self, mock_resize, mock_named):
+        visualizer = Visualizer()
+
+        detection = MagicMock(label="drone", confidence=0.95, track_id=42)
+
+        assert visualizer._format_detection_label(detection) == "#42 drone 0.95"
 
     @patch('cv2.namedWindow')
     @patch('cv2.resizeWindow')

@@ -32,7 +32,7 @@ class Visualizer(BaseVisualizer):
         if event == "on_inference_result":
             boxes = [detection.bbox for detection in data.frame_context.detections] or None
             labels = [
-                f"{detection.label} {detection.confidence:.2f}"
+                self._format_detection_label(detection)
                 for detection in data.frame_context.detections
             ] or None
             data.should_continue = self.show(
@@ -105,6 +105,10 @@ class Visualizer(BaseVisualizer):
             return False
 
         return True
+
+    def _format_detection_label(self, detection):
+        prefix = f"ID: {detection.track_id} " if detection.track_id is not None else ""
+        return f"{prefix}{detection.label} {detection.confidence:.2f}"
         
     def cleanup(self):
         """Close the display window."""

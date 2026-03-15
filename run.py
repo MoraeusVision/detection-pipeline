@@ -3,6 +3,7 @@ import logging
 
 from source_factory import SourceFactory
 from detectors.detector_factory import DetectorFactory
+from tracking.registry import TrackerFactory
 from events import EventManager
 from arguments import parse_arguments
 from visualization import Visualizer
@@ -23,13 +24,25 @@ def main():
         model_path=config["model_path"],
         confidence_threshold=config.get("conf", 0.5),
     )
+    tracker = None
+    if config.get("tracker") and not source.is_static:
+        tracker = TrackerFactory.create(
+            tracker_name=config["tracker"],
+            config=config.get("tracker_config"),
+        )
+
     visualizer = Visualizer() if config["show"] else None
 
     event_manager = EventManager()
     if visualizer:
         event_manager.register("on_inference_result", visualizer)
 
-    pipeline = DetectionPipeline(source=source, model=model, event_manager=event_manager)
+    pipeline = DetectionPipeline(
+        source=source,
+        model=model,
+        tracker=tracker,
+        event_manager=event_manager,
+    )
     
     # Cleanup manager collects cleanup methods and run them in the end
     cleanup = CleanupManager()
