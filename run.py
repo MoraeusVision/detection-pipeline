@@ -7,7 +7,7 @@ from tracking.registry import TrackerFactory
 from events import EventManager
 from arguments import parse_arguments
 from visualization import Visualizer
-from utils import CleanupManager
+from utils import CleanupManager, SaveManager
 from config_loader import read_from_config
 from pipeline import DetectionPipeline
 
@@ -32,10 +32,13 @@ def main():
         )
 
     visualizer = Visualizer() if config["show"] else None
+    saver = SaveManager() if config["save"] else None
 
     event_manager = EventManager()
     if visualizer:
         event_manager.register("on_inference_result", visualizer)
+    if saver:
+        event_manager.register("on_inference_result", saver)
 
     pipeline = DetectionPipeline(
         source=source,

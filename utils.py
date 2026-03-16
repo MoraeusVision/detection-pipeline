@@ -1,4 +1,5 @@
 import logging
+import cv2
 
 
 class CleanupManager:
@@ -24,3 +25,63 @@ class CleanupManager:
             except Exception as e:
                 logging.exception("Cleanup failed for %s: %s", func, e)
         self._tasks.clear()
+
+
+class SaveManager:
+    def __init__(self):
+        pass
+
+    def handle_event(self, event, data):
+        if event == "on_inference_result":
+            if data.is_static:
+                annotated_frame = self._annotate_frame(data)
+                self.save_image(annotated_frame)
+
+    def save_image(self, frame):
+        cv2.imwrite("output.jpg", frame)
+
+    def _annotate_frame(self, data):
+        """
+        Annotade the image with bounding boxes, labels and tracking IDs.
+        """
+        if data is None or data.frame_context is None:
+            logging.warning("Missing pipeline context")
+            return None
+        
+        frame = data.frame_context.frame
+        if frame is None:
+            logging.warning("Missing frame")
+            return None
+        
+        if not data.frame_context.detections:
+            return frame.copy()
+
+        annotated_frame = frame.copy()
+        
+        boxes = [detection.bbox for detection in data.frame_context.detections] or None
+        labels = [
+                self._format_detection_label(detection)
+                for detection in data.frame_context.detections
+            ] or None
+        
+        if boxes is not None:
+            for index, box in enumerate(boxes):
+                x1, y1, x2, y2 = box
+                cv2.rectangle(annotated_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                if labels is not None and index < len(labels):
+                    text_origin = (x1, max(20, y1 - 10))
+                    cv2.putText(
+                        annotated_frame,
+                        labels[index],
+                        text_origin,
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.6,
+                        (0, 255, 0),
+                        2,
+                        cv2.LINE_AA,
+                    )
+        return annotated_frame
+
+    def _format_detection_label(self, detection):
+        prefix = f"ID: {detection.track_id} " if detection.track_id is not None else ""
+        return f"{prefix}{detection.label} {detection.confidence:.2f}"
