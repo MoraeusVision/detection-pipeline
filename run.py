@@ -53,6 +53,8 @@ def main():
         cleanup.add(source.cleanup)
     if visualizer:
         cleanup.add(visualizer.cleanup)
+    if saver and not source.is_static:
+        cleanup.add(saver.save_video)
 
     try:
         pipeline.run()

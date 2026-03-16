@@ -29,16 +29,33 @@ class CleanupManager:
 
 class SaveManager:
     def __init__(self):
-        pass
+        self.out = None
 
     def handle_event(self, event, data):
         if event == "on_inference_result":
+            frame = self._annotate_frame(data)
+            if frame is None:
+                return
             if data.is_static:
-                annotated_frame = self._annotate_frame(data)
-                self.save_image(annotated_frame)
+                self.save_image(frame)
+            else:
+                self.write_frame_to_video(frame)
 
     def save_image(self, frame):
+        logging.info("Saving image..")
         cv2.imwrite("output.jpg", frame)
+
+    def write_frame_to_video(self, frame, fps=30):
+        if self.out is None:
+            width = frame.shape[1]
+            height = frame.shape[0]
+            fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+            self.out = cv2.VideoWriter("output.mp4", fourcc, fps, (width, height))
+        self.out.write(frame)
+
+    def save_video(self):
+        logging.info("Saving video..")
+        self.out.release()
 
     def _annotate_frame(self, data):
         """
