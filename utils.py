@@ -1,5 +1,6 @@
 import logging
 import cv2
+from pathlib import Path
 
 
 class CleanupManager:
@@ -28,8 +29,12 @@ class CleanupManager:
 
 
 class SaveManager:
-    def __init__(self):
+    def __init__(self, output_path="output"):
         self.out = None
+        self.output_dir = Path(output_path)
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        self.image_path = self.output_dir / "output_image.jpg"
+        self.video_path = self.output_dir / "output_video.mp4"
 
     def handle_event(self, event, data):
         if event == "on_inference_result":
@@ -43,19 +48,21 @@ class SaveManager:
 
     def save_image(self, frame):
         logging.info("Saving image..")
-        cv2.imwrite("output.jpg", frame)
+        cv2.imwrite(self.image_path, frame)
 
     def write_frame_to_video(self, frame, fps=30):
         if self.out is None:
             width = frame.shape[1]
             height = frame.shape[0]
             fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-            self.out = cv2.VideoWriter("output.mp4", fourcc, fps, (width, height))
+            self.out = cv2.VideoWriter(str(self.video_path), fourcc, fps, (width, height))
         self.out.write(frame)
 
     def save_video(self):
         logging.info("Saving video..")
-        self.out.release()
+        if self.out is not None:
+            self.out.release()
+            self.out = None
 
     def _annotate_frame(self, data):
         """
